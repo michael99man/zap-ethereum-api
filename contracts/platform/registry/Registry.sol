@@ -53,12 +53,13 @@ contract Registry is Destructible, RegistryInterface, Upgradable {
     /// If oracle[specfifier] is uninitialized, Curve is mapped to endpoint
     /// @param endpoint specifier of endpoint. currently "smart_contract" or "socket_subscription"
     /// @param curve flattened array of all segments, coefficients across all polynomial terms, [e0,l0,c0,c1,c2,...]
-    /// @param broker address for endpoint. if non-zero address, only this address will be able to bond/unbond 
+    /// @param broker address for endpoint. if non-zero address, only this address will be able to bond/unbond
     function initiateProviderCurve(
         bytes32 endpoint,
         int256[] curve,
         address broker
     )
+        public
         returns (bool)
     {
         // Provider must be initiated
@@ -68,7 +69,7 @@ contract Registry is Destructible, RegistryInterface, Upgradable {
         // Can't initiate null endpoint
         require(endpoint != bytes32(0), "Error: Can't initiate null endpoint");
 
-        setCurve(msg.sender, endpoint, curve);        
+        setCurve(msg.sender, endpoint, curve);
         db.pushBytesArray(keccak256(abi.encodePacked('oracles', msg.sender, 'endpoints')), endpoint);
         db.setBytes32(keccak256(abi.encodePacked('oracles', msg.sender, endpoint, 'broker')), bytes32(broker));
 
@@ -82,7 +83,7 @@ contract Registry is Destructible, RegistryInterface, Upgradable {
         // Provider must be initiated
         require(isProviderInitiated(msg.sender), "Error: Provider is not yet initiated");
 
-        if(!isProviderParamInitialized(msg.sender, key)){
+        if (!isProviderParamInitialized(msg.sender, key)) {
             // initialize this provider param
             db.setNumber(keccak256(abi.encodePacked('oracles', msg.sender, 'is_param_set', key)), 1);
             db.pushBytesArray(keccak256(abi.encodePacked('oracles', msg.sender, 'providerParams')), key);
@@ -117,14 +118,12 @@ contract Registry is Destructible, RegistryInterface, Upgradable {
 
     //Set title for registered provider account
     function setProviderTitle(bytes32 title) public {
-
         require(isProviderInitiated(msg.sender), "Error: Provider is not initiated");
         db.setBytes32(keccak256(abi.encodePacked('oracles', msg.sender, "title")), title);
     }
 
     //Clear an endpoint with no bonds
     function clearEndpoint(bytes32 endpoint) public {
-
         require(isProviderInitiated(msg.sender), "Error: Provider is not initiated");
 
         uint256 bound = db.getNumber(keccak256(abi.encodePacked('totalBound', msg.sender, endpoint)));
@@ -133,9 +132,9 @@ contract Registry is Destructible, RegistryInterface, Upgradable {
         int256[] memory nullArray = new int256[](0);
         bytes32[] memory endpoints =  db.getBytesArray(keccak256(abi.encodePacked("oracles", msg.sender, "endpoints")));
         for(uint256 i = 0; i < endpoints.length; i++) {
-            if( endpoints[i] == endpoint ) {
+            if(endpoints[i] == endpoint) {
                db.setBytesArrayIndex(keccak256(abi.encodePacked("oracles", msg.sender, "endpoints")), i, bytes32(0));
-               break; 
+               break;
             }
         }
         db.pushBytesArray(keccak256(abi.encodePacked('oracles', msg.sender, 'endpoints')), bytes32(0));
@@ -245,7 +244,7 @@ contract Registry is Destructible, RegistryInterface, Upgradable {
         uint index = 0;
 
         // Validate the curve
-        while ( index < curve.length ) {
+        while (index < curve.length) {
             // Validate the length of the piece
             int len = curve[index];
             require(len > 0, "Error: Invalid Curve");
@@ -259,7 +258,7 @@ contract Registry is Destructible, RegistryInterface, Upgradable {
             require(uint(end) > prevEnd, "Error: Invalid Curve");
 
             prevEnd = uint(end);
-            index += uint(len) + 2; 
+            index += uint(len) + 2;
         }
 
         db.setIntArray(keccak256(abi.encodePacked('oracles', provider, 'curves', endpoint)), curve);

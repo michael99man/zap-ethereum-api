@@ -1,5 +1,4 @@
 pragma solidity ^0.4.24;
-// Technically an abstract contract, not interface (solidity compiler devs are working to fix this right now)
 
 contract RegistryInterface {
     function initiateProvider(uint256, bytes32) public returns (bool);
